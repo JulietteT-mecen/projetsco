@@ -206,5 +206,6 @@ coef(lmcobbdouglas)
 for (i in test){
   print(i)
   reg=get(paste("lm",i,sep=""))
+  print(coef(reg))
   
 }
