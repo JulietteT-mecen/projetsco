@@ -7,7 +7,7 @@ library(RColorBrewer)
 library(lmtest)
 library(car)
 library(miscTools)
-setwd("~/FAC/M2/Econometrics")
+setwd("~/FAC/M2/Econometrics/projetsco")
 
 # Import and clean data
 data=fread("Pommes.csv",dec=",")
@@ -143,6 +143,16 @@ ggplot(data, aes(x=eps_echelle_fit)) +
   geom_density(alpha=.2, fill="#FF6666")
 ggplot(data, aes(x=eps_echelle, y=X)) + 
   geom_point()
+
+# Taux marginal de substitution technique
+tmst_CapLab=-coef(lmlineaire)["qLab"] / coef(lmlineaire)["qCap"]
+tmst_CapMat=-coef(lmlineaire)["qMat"] / coef(lmlineaire)["qCap"]
+tmst_LabCap=-coef(lmlineaire)["qCap"] / coef(lmlineaire)["qLab"]
+tmst_LabMat=-coef(lmlineaire)["qMat"] / coef(lmlineaire)["qLab"]
+tmst_MatCap=-coef(lmlineaire)["qCap"] / coef(lmlineaire)["qMat"]
+tmst_MatLab=-coef(lmlineaire)["qLab"] / coef(lmlineaire)["qMat"]
+
+#Taux Marginal 
 
 # Estimer la Cobb-Douglas
 lm1=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
