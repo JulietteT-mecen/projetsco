@@ -152,7 +152,14 @@ tmst_LabMat=-coef(lmlineaire)["qMat"] / coef(lmlineaire)["qLab"]
 tmst_MatCap=-coef(lmlineaire)["qCap"] / coef(lmlineaire)["qMat"]
 tmst_MatLab=-coef(lmlineaire)["qLab"] / coef(lmlineaire)["qMat"]
 
-#Taux Marginal 
+#Taux Marginal relatif de substitution technique 
+data[,tmrst_CapLab:=-eps_lab/eps_cap]
+data[,tmrst_CapMat:=-eps_mat/eps_cap]
+data[,tmrst_LabCap:=-eps_cap/eps_lab]
+data[,tmrst_LabMat:=-eps_mat/eps_lab]
+data[,tmrst_MatCap:=-eps_cap/eps_mat]
+data[,tmrst_MatLab:=-eps_lab/eps_mat]
+colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 
 # Estimer la Cobb-Douglas
 lm1=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
