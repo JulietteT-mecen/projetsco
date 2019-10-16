@@ -14,7 +14,11 @@ data=fread("Pommes.csv",dec=",")
 data=data[,N:=NULL]
 data$adv=as.factor(data$adv)
 
-# Histogrammes des productivités moyennes des 3 facteurs de prod
+#####
+
+# Statistiques descriptives 
+
+### Histogrammes des productivités moyennes des 3 facteurs de prod
 data=data[,pmcap:=qOut/vCap]
 data=data[,pmlab:=qOut/vLab]
 data=data[,pmmat:=qOut/vMat]
@@ -28,13 +32,13 @@ ggplot(data, aes(x=pmmat)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-# Corrélations entre les 3 facteurs de prod
+### Corrélations entre les 3 facteurs de prod
 datacor=data[,.(vLab,vCap,vMat,qOut)]
 M=cor(datacor)
 corrplot(M,diag=F,type = "lower",addCoef.col = "white", method="shade",
          col=brewer.pal(n=8, name="PuOr"))
 
-# Graph des correlations deux à deux 
+### Graph des correlations deux à deux 
 ggplot(data, aes(x=pmcap, y=pmlab)) + 
   geom_point()+
   geom_smooth(method=lm)
@@ -45,7 +49,7 @@ ggplot(data, aes(x=pmmat, y=pmlab)) +
   geom_point()+
   geom_smooth(method=lm)
 
-# Graph par rapport a qOut
+### Graph par rapport a qOut
 ggplot(data, aes(x=pmcap, y=qOut)) + 
   geom_point()+
   geom_smooth(method=lm)
@@ -56,22 +60,23 @@ ggplot(data, aes(x=pmmat, y=qOut)) +
   geom_point()+
   geom_smooth(method=lm)
 
-# Calcul des quantités
+### Calcul des quantités
 data[,qCap:=vCap/pCap]
 data[,qLab:=vLab/pLab]
 data[,qMat:=vMat/pMat]
 
-# Calcul du coût total et des coûts variables
+### Calcul du coût total et des coûts variables
 data[,cost:=vCap+vLab+vMat]
 all.equal(data$cost, with( data, pCap * qCap + pLab * qLab + pMat * qMat )) 
 data[,vcost:=vLab+vMat]
 
-# Calcul des indices Paasche, Laspeyre et Fisher
+### Calcul des indices Paasche, Laspeyre et Fisher
 data[,XP:=(vCap+vLab+vMat) / (mean(qCap)*pCap + mean(qLab)*pLab + mean(qMat)*pMat)]
 data[,XL:=(qCap*mean(pCap) + qLab*mean(pLab) + qMat*mean(pMat)) /
        (mean(qCap)*mean(pCap) + mean(qLab)*mean(pLab) + mean(qMat)*mean(pMat))]
 data[,XF:=sqrt(XP*XL)]
-# Indice de productivité globale des facteurs
+
+### Indice de productivité globale des facteurs
 data[,tfp:=qOut/XF]
 ggplot(data, aes(x=tfp)) + 
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
@@ -89,19 +94,23 @@ ggplot(data, aes(x=tfp, y=qMat)) +
   geom_point()+
   geom_smooth(method=lm)
 
-# Boxplot
+### Boxplot
 p=ggplot(data, aes(x=adv, y=tfp,color=adv)) + 
   geom_boxplot()
 p+scale_color_manual(values=c("#999999", "#E69F00"))
 
-# Estimer une fonction linéaire 
+#####
+
+# Estimation des fonctions de production
+
+## Fonction linéaire 
 lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
 summary(lmlineaire)
 compPlot(data$qOut, fitted(lmlineaire))
 sum(fitted(lmlineaire) < 0 )
 coef(lmlineaire)
 
-# Elasticités
+### Elasticités
 data[,eps_cap:=coef(lmlineaire)["qCap"]*qCap/qOut]
 data[,eps_lab:=coef(lmlineaire)["qLab"]*qLab/qOut]
 data[,eps_mat:=coef(lmlineaire)["qMat"]*qMat/qOut]
@@ -116,7 +125,6 @@ ggplot(data, aes(x=eps_mat)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-# Comparaison avec la production estimée
 data[,eps_cap_fit:=coef(lmlineaire)["qCap"]*qCap/fitted(lmlineaire)]
 data[,eps_lab_fit:=coef(lmlineaire)["qLab"]*qLab/fitted(lmlineaire)]
 data[,eps_mat_fit:=coef(lmlineaire)["qMat"]*qMat/fitted(lmlineaire)]
@@ -131,7 +139,6 @@ ggplot(data, aes(x=eps_mat_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-#Elasticités d'échelle
 data[,eps_echelle:= eps_cap+eps_lab+eps_mat]
 data[,eps_echelle_fit:= eps_cap_fit+eps_lab_fit+eps_mat_fit]
 colMeans(data[, c("eps_echelle","eps_echelle_fit"), with=FALSE])
@@ -144,7 +151,7 @@ ggplot(data, aes(x=eps_echelle_fit)) +
 ggplot(data, aes(x=eps_echelle, y=X)) + 
   geom_point()
 
-# Taux marginal de substitution technique
+### Taux marginal de substitution technique
 tmst_CapLab=-coef(lmlineaire)["qLab"] / coef(lmlineaire)["qCap"]
 tmst_CapMat=-coef(lmlineaire)["qMat"] / coef(lmlineaire)["qCap"]
 tmst_LabCap=-coef(lmlineaire)["qCap"] / coef(lmlineaire)["qLab"]
@@ -152,7 +159,7 @@ tmst_LabMat=-coef(lmlineaire)["qMat"] / coef(lmlineaire)["qLab"]
 tmst_MatCap=-coef(lmlineaire)["qCap"] / coef(lmlineaire)["qMat"]
 tmst_MatLab=-coef(lmlineaire)["qLab"] / coef(lmlineaire)["qMat"]
 
-#Taux Marginal relatif de substitution technique 
+### Taux Marginal relatif de substitution technique 
 data[,tmrst_CapLab:=-eps_lab/eps_cap]
 data[,tmrst_CapMat:=-eps_mat/eps_cap]
 data[,tmrst_LabCap:=-eps_cap/eps_lab]
@@ -161,10 +168,11 @@ data[,tmrst_MatCap:=-eps_cap/eps_mat]
 data[,tmrst_MatLab:=-eps_lab/eps_mat]
 colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 
-# Estimer la Cobb-Douglas
-lm1=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
-stargazer(lm1,type="text")
-plot(lm1)
+## Fonction Cobb-Douglas
+lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
+stargazer(lmcobbdouglas,type="text")
+
+
 
 # Intervalle des rendements d'echelle
 shapiro.test(residuals(lm1))
@@ -184,3 +192,19 @@ stargazer(lm2,type="text")
 lm2$coefficients
 vif(lm2)
 # Il y a une très grande colinéarité entre les paramètres (ce qui explique leur non significativité)
+
+
+# Boucle calcul elasticité 
+function_list=c("lineaire","cobbdouglas","quadratic","translog")
+test=c("lineaire","cobbdouglas")
+lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
+lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
+assign(x=paste("table_",i,sep=""),value=subset(A, ID == i))
+reg=get("lmcobbdouglas")
+coef(reg)
+coef(lmcobbdouglas)
+for (i in test){
+  print(i)
+  reg=get(paste("lm",i,sep=""))
+  
+}
