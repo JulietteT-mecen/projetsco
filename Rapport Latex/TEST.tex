@@ -1,0 +1,99 @@
+
+\documentclass[12pt]{article}
+\usepackage[frenchb]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{fancyhdr} 
+\usepackage{eurosym}
+\usepackage{float} 
+\usepackage{eurosym}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{lastpage}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{amssymb}\usepackage{etex}%pour profiter pleinement du moteur pdftex.
+\usepackage[utf8]{inputenc}
+\usepackage{pdfpages}
+\usepackage{listings,xcolor}
+
+
+
+\geometry{textheight=26cm,textwidth=18cm}
+\geometry{hmargin=2cm,vmargin=2.5cm}
+\pagestyle{fancy}
+
+
+\begin{document}
+
+
+
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+%-------------LOGO MÃ©cen
+\newcommand{\MEE}{\hspace{-.25cm}{\fontfamily{pnc} \selectfont{
+\mbox{
+{\color[RGB]{52,74,88}M}
+\kern-.446em\lower.75ex\hbox{\color[RGB]{7,93,142}\'E}%
+\kern-.1427em\lower.795ex\hbox{\color[RGB]{7,93,142}c}%
+\kern-.511em\lower -.24ex\hbox{\color[cmyk]{0.85,0.43,0.37,0.08}$\mathbb{E}$}
+\kern-.38em\lower -.24ex\hbox{\color[cmyk]{0.85,0.43,0.37,0.08}n}}}}
+}
+
+
+
+\pagenumbering{gobble}%pas de numÃ©ro de page
+
+\begin{center}
+	\textsc{\Large Master \'Economiste d'entreprise}\\[1cm]
+	\hspace{-2cm}{\scalefont{7}\selectfont \MEE} \\\vspace{3cm}
+	\textsc{\Large Mesure et performance}\\\vspace{2cm}
+	\HRule \\\vspace{.5cm}
+	{\Huge\bfseries TP d'économétrie appliquée}\\
+	\vspace{.5cm}\HRule \\\vspace{3.2cm}
+
+						% Author and supervisor
+
+	\large{\begin{minipage}{0.4\textwidth}
+		\begin{flushleft}
+		\textsc{Professeur d'économétrie}\\\vspace{0.4cm}
+		\textsc{M. Bousquet}\\\vspace{.5cm}
+		\end{flushleft}
+	\end{minipage}
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushright}% \large
+		\emph{Mécen 2} \\
+		\textsc{Maurice Thomas}\\\vspace{0.4cm}
+		\textsc{Thiret Juliette}\\\vspace{1cm}
+		\textsc{}\\
+		\end{flushright}
+	\end{minipage}}
+
+						% Bottom of the page
+
+	\vspace{1cm}
+	\includegraphics[scale=0.2]{universite.png}\\
+\newpage
+\end{center}
+
+\pagenumbering{arabic}
+
+\fancyhead[L]{\includegraphics[width=2cm]{Mecen.jpeg}}
+\fancyhead[R]{\'Econométrie Appliquée}
+\fancyfoot[R]{\textbf{Page \thepage/\pageref{LastPage}}}
+\fancyfoot[C]{\includegraphics[width=3cm]{universite.png}}
+\fancyfoot[L]{\today}
+\fancyhead[C]{}
+
+
+
+
+fhdsjkfl
+
+
+
+
+
+\end{document}
