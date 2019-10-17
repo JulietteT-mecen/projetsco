@@ -172,8 +172,6 @@ colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
 stargazer(lmcobbdouglas,type="text")
 
-
-
 # Intervalle des rendements d'echelle
 shapiro.test(residuals(lm1))
 vcov(lm1)
@@ -216,5 +214,43 @@ f_test=function(contraint,non_contraint,seuil){
   
 }
 f_test(lmcobbdouglas,lmtranslog,0.05)
-qf(0.95,6,130)
-lmtranslog$df.residual
+
+# Fonction générique pour estimer la production
+
+estimation=function(data,var_expliquee,vars_explicatives,forme_fonctionelle){
+  if (forme_fonctionelle=="lineaire"){
+    formule=paste(var_expliquee,"~ ",sep=" ")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule,i,sep=" ")
+      }else{
+        formule=paste(formule,"+",i,sep=" ")
+      }
+    }
+    rm(compteur,i)
+    formule=as.formula(formule)
+    lmlineaire=lm(formule, data=data)
+    return(lmlineaire)
+  }else if (forme_fonctionelle=="cd"){
+    formule=paste("log(",var_expliquee,") ~ ",sep="")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule," log(",i,") ",sep="")
+      }else{
+        formule=paste(formule," +"," log(",i,") ",sep="")
+      }
+    }
+    rm(compteur,i)
+    formule=as.formula(formule)
+    lmcd=lm(formule, data=data)
+    return(lmcd)
+  }
+  
+}
+varlist=c("qCap","qLab","qMat")
+test=estimation(data, var_expliquee = "qOut", vars_explicatives = varlist, forme_fonctionelle = "cd")
+coef(test)==coef(lmcobbdouglas)
