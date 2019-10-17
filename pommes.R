@@ -201,12 +201,20 @@ length(lmcobbdouglas$residuals)
 lmcobbdouglas$df.residual
 length(lmcobbdouglas$coefficients)-1
 
-f_test=function(contraint,non_contraint){
+f_test=function(contraint,non_contraint,seuil){
   rcontraint=summary(contraint)$r.squared
   rnoncontraint=summary(non_contraint)$r.squared
   Q=length(non_contraint$coefficients)-length(contraint$coefficients)
   resultat=((rnoncontraint-rcontraint)/(1-rnoncontraint))*(non_contraint$df.residual/Q)
-  print(resultat)
+  alpha=1-seuil
+  F_theo=qf(alpha,Q,non_contraint$df.residual)
+  if (resultat>F_theo){
+    print(paste(round(resultat,3),"est strictement supérieur à la statistique théorique de Fisher, on rejette l'hypothèse nulle",sep=" "))
+  }else {
+    print(paste(round(resultat,3),"est inférieur à la statistique théorique de Fisher, on ne peux pas rejeter l'hypothèse nulle",sep=" "))
+  }
+  
 }
-f_test(lmcobbdouglas,lmtranslog)
-
+f_test(lmcobbdouglas,lmtranslog,0.05)
+qf(0.95,6,130)
+lmtranslog$df.residual
