@@ -248,9 +248,27 @@ estimation=function(data,var_expliquee,vars_explicatives,forme_fonctionelle){
     formule=as.formula(formule)
     lmcd=lm(formule, data=data)
     return(lmcd)
+  }else if (forme_fonctionelle=="translog"){
+    formule=paste("log(",var_expliquee,") ~ (",sep="")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule," log(",i,") ",sep="")
+      }else{
+        formule=paste(formule," +"," log(",i,") ",sep="")
+      }
+    }
+    rm(compteur,i)
+    formule=paste(formule,")^2",sep="")
+    for (i in vars_explicatives){
+      formule=paste(formule,"+I(log(",i,")^2)",sep="")
+    }
+    formule=as.formula(formule)
+    lmtranslog=lm(formule, data=data)
+    return(lmtranslog)
   }
-  
 }
 varlist=c("qCap","qLab","qMat")
-test=estimation(data, var_expliquee = "qOut", vars_explicatives = varlist, forme_fonctionelle = "cd")
-coef(test)==coef(lmcobbdouglas)
+test=estimation(data, var_expliquee = "qOut", vars_explicatives = varlist, forme_fonctionelle = "translog")
+coef(test)==coef(lmtranslog)
