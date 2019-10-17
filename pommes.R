@@ -186,26 +186,27 @@ est-1.96*seESCD
 # 1 n'appartient pas à l'intervalle
 
 # Estimer la translog
-lm2=lm(log(qOut)~(log(qCap)+log(qLab)+log(qMat))^2+I(log(qCap)^2)+I(log(qLab)^2)+I(log(qMat)^2),
+lmtranslog=lm(log(qOut)~(log(qCap)+log(qLab)+log(qMat))^2+I(log(qCap)^2)+I(log(qLab)^2)+I(log(qMat)^2),
           data=data)
 stargazer(lm2,type="text")
 lm2$coefficients
 vif(lm2)
 # Il y a une très grande colinéarité entre les paramètres (ce qui explique leur non significativité)
 
+# Test CD vs translog
+anova(lmcobbdouglas,lmtranslog)
+stargazer(lmcobbdouglas,type="text")
+summary(lmcobbdouglas)$r.squared
+length(lmcobbdouglas$residuals)
+lmcobbdouglas$df.residual
+length(lmcobbdouglas$coefficients)-1
 
-# Boucle calcul elasticité 
-function_list=c("lineaire","cobbdouglas","quadratic","translog")
-test=c("lineaire","cobbdouglas")
-lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
-lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
-assign(x=paste("table_",i,sep=""),value=subset(A, ID == i))
-reg=get("lmcobbdouglas")
-coef(reg)
-coef(lmcobbdouglas)
-for (i in test){
-  print(i)
-  reg=get(paste("lm",i,sep=""))
-  print(coef(reg))
-  
+f_test=function(contraint,non_contraint){
+  rcontraint=summary(contraint)$r.squared
+  rnoncontraint=summary(non_contraint)$r.squared
+  Q=length(non_contraint$coefficients)-length(contraint$coefficients)
+  resultat=((rnoncontraint-rcontraint)/(1-rnoncontraint))*(non_contraint$df.residual/Q)
+  print(resultat)
 }
+f_test(lmcobbdouglas,lmtranslog)
+
