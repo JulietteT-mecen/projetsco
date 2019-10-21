@@ -270,5 +270,18 @@ estimation=function(data,var_expliquee,vars_explicatives,forme_fonctionelle){
   }
 }
 varlist=c("qCap","qLab","qMat")
-test=estimation(data, var_expliquee = "qOut", vars_explicatives = varlist, forme_fonctionelle = "translog")
-coef(test)==coef(lmtranslog)
+test=estimation(data, var_expliquee = "qOut", vars_explicatives = varlist, forme_fonctionelle = "lineaire")
+coef(test)==coef(lmlineaire)
+
+## Fonction CES
+lmces_CapLab=lm(log(qCap/qLab) ~ log(pLab/pCap), data=data)
+lmces_CapMat=lm(log(qCap/qMat) ~ log(pMat/pCap), data=data)
+lmces_LabCap=lm(log(qLab/qCap) ~ log(pCap/pLab), data=data)
+lmces_LabMat=lm(log(qLab/qMat) ~ log(pMat/pLab), data=data)
+lmces_MatCap=lm(log(qMat/qCap) ~ log(pCap/pMat), data=data)
+lmces_MatLab=lm(log(qMat/qLab) ~ log(pLab/pMat), data=data)
+ces_list=c("lmces_CapLab","lmces_CapMat","lmces_LabCap","lmces_LabMat","lmces_MatCap","lmces_MatLab")
+for (i in ces_list){
+  stargazer(get(i),type="text")
+}
+rm(i)
