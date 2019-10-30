@@ -16,6 +16,62 @@ data$adv=as.factor(data$adv)
 
 #####
 
+# Fonction générique pour estimer la production
+
+estimation=function(data,var_expliquee,vars_explicatives,forme_fonctionelle){
+  if (forme_fonctionelle=="lineaire"){
+    formule=paste(var_expliquee,"~ ",sep=" ")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule,i,sep=" ")
+      }else{
+        formule=paste(formule,"+",i,sep=" ")
+      }
+    }
+    rm(compteur,i)
+    formule=as.formula(formule)
+    lmlineaire=lm(formule, data=data)
+    return(lmlineaire)
+  }else if (forme_fonctionelle=="cd"){
+    formule=paste("log(",var_expliquee,") ~ ",sep="")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule," log(",i,") ",sep="")
+      }else{
+        formule=paste(formule," +"," log(",i,") ",sep="")
+      }
+    }
+    rm(compteur,i)
+    formule=as.formula(formule)
+    lmcd=lm(formule, data=data)
+    return(lmcd)
+  }else if (forme_fonctionelle=="translog"){
+    formule=paste("log(",var_expliquee,") ~ (",sep="")
+    compteur=0
+    for(i in vars_explicatives){
+      compteur=compteur+1
+      if (compteur==1){
+        formule=paste(formule," log(",i,") ",sep="")
+      }else{
+        formule=paste(formule," +"," log(",i,") ",sep="")
+      }
+    }
+    rm(compteur,i)
+    formule=paste(formule,")^2",sep="")
+    for (i in vars_explicatives){
+      formule=paste(formule,"+I(log(",i,")^2)",sep="")
+    }
+    formule=as.formula(formule)
+    lmtranslog=lm(formule, data=data)
+    return(lmtranslog)
+  }
+}
+#####
+
 # Statistiques descriptives 
 
 ### Histogrammes des productivités moyennes des 3 facteurs de prod
@@ -102,9 +158,12 @@ p+scale_color_manual(values=c("#999999", "#E69F00"))
 #####
 
 # Estimation des fonctions de production
+varlist=c("qCap","qLab","qMat")
 
 ## Fonction linéaire 
-lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
+# lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
+lmlineaire=estimation(data, var_expliquee = "qOut", 
+                      vars_explicatives = varlist, forme_fonctionelle = "lineaire")
 summary(lmlineaire)
 compPlot(data$qOut, fitted(lmlineaire))
 sum(fitted(lmlineaire) < 0 )
@@ -148,7 +207,7 @@ ggplot(data, aes(x=eps_echelle)) +
 ggplot(data, aes(x=eps_echelle_fit)) + 
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
-ggplot(data, aes(x=eps_echelle, y=X)) + 
+ggplot(data, aes(x=eps_echelle, y=XF)) + 
   geom_point()
 
 ### Taux marginal de substitution technique
@@ -169,43 +228,78 @@ data[,tmrst_MatLab:=-eps_lab/eps_mat]
 colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 
 ## Fonction Cobb-Douglas
-lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
+# lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
+lmcobbdouglas=estimation(data, var_expliquee = "qOut", 
+                      vars_explicatives = varlist, forme_fonctionelle = "cd")
 stargazer(lmcobbdouglas,type="text")
 
-
-
 # Intervalle des rendements d'echelle
-shapiro.test(residuals(lm1))
-vcov(lm1)
-est=sum(lm1$coefficients[-1])
+shapiro.test(residuals(lmcobbdouglas))
+vcov(lmcobbdouglas)
+est=sum(lmcobbdouglas$coefficients[-1])
 dESCD=c( 0, 1, 1, 1 )
-varESCD=t(dESCD) %*% vcov(lm1) %*% dESCD
+varESCD=t(dESCD) %*% vcov(lmcobbdouglas) %*% dESCD
 seESCD=sqrt( varESCD )
 est+1.96*seESCD
 est-1.96*seESCD
 # 1 n'appartient pas à l'intervalle
 
 # Estimer la translog
-lm2=lm(log(qOut)~(log(qCap)+log(qLab)+log(qMat))^2+I(log(qCap)^2)+I(log(qLab)^2)+I(log(qMat)^2),
-          data=data)
-stargazer(lm2,type="text")
-lm2$coefficients
-vif(lm2)
+# lmtranslog=lm(log(qOut)~(log(qCap)+log(qLab)+log(qMat))^2+I(log(qCap)^2)+I(log(qLab)^2)+I(log(qMat)^2),
+           # data=data)
+lmtranslog=estimation(data, var_expliquee = "qOut", 
+                      vars_explicatives = varlist, forme_fonctionelle = "translog")
+stargazer(lmtranslog,type="text")
+lmtranslog$coefficients
+vif(lmtranslog)
 # Il y a une très grande colinéarité entre les paramètres (ce qui explique leur non significativité)
 
+# Test CD vs translog
+anova(lmcobbdouglas,lmtranslog)
+stargazer(lmcobbdouglas,type="text")
+summary(lmcobbdouglas)$r.squared
+length(lmcobbdouglas$residuals)
+lmcobbdouglas$df.residual
+length(lmcobbdouglas$coefficients)-1
 
-# Boucle calcul elasticité 
-function_list=c("lineaire","cobbdouglas","quadratic","translog")
-test=c("lineaire","cobbdouglas")
-lmlineaire=lm( qOut ~ qCap + qLab + qMat, data = data)
-lmcobbdouglas=lm(log(qOut)~log(qCap)+log(qLab)+log(qMat),data=data)
-assign(x=paste("table_",i,sep=""),value=subset(A, ID == i))
-reg=get("lmcobbdouglas")
-coef(reg)
-coef(lmcobbdouglas)
-for (i in test){
-  print(i)
-  reg=get(paste("lm",i,sep=""))
-  print(coef(reg))
+# Fonction pour faire le test CD vs translog
+f_test=function(contraint,non_contraint,seuil){
+  rcontraint=summary(contraint)$r.squared
+  rnoncontraint=summary(non_contraint)$r.squared
+  Q=length(non_contraint$coefficients)-length(contraint$coefficients)
+  resultat=((rnoncontraint-rcontraint)/(1-rnoncontraint))*(non_contraint$df.residual/Q)
+  alpha=1-seuil
+  F_theo=qf(alpha,Q,non_contraint$df.residual)
+  if (resultat>F_theo){
+    print(paste(round(resultat,3),"est strictement supérieur à la statistique théorique de Fisher, on rejette l'hypothèse nulle",sep=" "))
+  }else {
+    print(paste(round(resultat,3),"est inférieur à la statistique théorique de Fisher, on ne peux pas rejeter l'hypothèse nulle",sep=" "))
+  }
   
 }
+f_test(lmcobbdouglas,lmtranslog,0.05)
+
+## Fonction CES
+lmces_CapLab=lm(log(qCap/qLab) ~ log(pLab/pCap), data=data)
+lmces_CapMat=lm(log(qCap/qMat) ~ log(pMat/pCap), data=data)
+lmces_LabCap=lm(log(qLab/qCap) ~ log(pCap/pLab), data=data)
+lmces_LabMat=lm(log(qLab/qMat) ~ log(pMat/pLab), data=data)
+lmces_MatCap=lm(log(qMat/qCap) ~ log(pCap/pMat), data=data)
+lmces_MatLab=lm(log(qMat/qLab) ~ log(pLab/pMat), data=data)
+ces_list=c("lmces_CapLab","lmces_CapMat","lmces_LabCap","lmces_LabMat","lmces_MatCap","lmces_MatLab")
+for (i in ces_list){
+  stargazer(get(i),type="text")
+}
+rm(i)
+
+#####
+
+# Fonctions de coût
+
+## Cobb Douglas
+reg_cout_CD=lm( log( cost ) ~ log( pCap ) + log( pLab ) + log( pMat ) + log( qOut ), data = data )
+stargazer(reg_cout_CD, type='text')
+
+## Cobb Douglass de court terme
+reg_cout_CD_short_run<-lm(log(qOut)~log(qLab)+log(qMat)+log(qCap), data=data)
+stargazer(reg_cout_CD_short_run, type="text")
