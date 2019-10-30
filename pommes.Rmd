@@ -1,7 +1,7 @@
 ---
-title: "Pommes"
-author: "Thiret Juliette"
-date: "7 octobre 2019"
+title: "Analyse de la production des pommes"
+author: "Thiret Juliette et Maurice Thomas"
+date: "30 octobre 2019"
 output: html_document
 ---
 
@@ -19,7 +19,7 @@ data=read.csv("Pommes.csv",sep=";",dec=",")
 data=as.data.table(data)
 ```
 
-#Manipulation de la base de données
+#Manipulation de la base de donn?es
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data<-data[,-1]
 ```
@@ -29,14 +29,14 @@ summary(data)
 str(data)
 ```
 
-Toutes les variables sont bien codées.
+Toutes les variables sont bien cod?es.
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data$adv<-as.factor(data$adv)
 ```
 
 
-##Création de variables : les quantités de facteurs
+##Cr?ation de variables : les quantit?s de facteurs
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data$qCap<-(data$vCap/data$pCap)
@@ -44,7 +44,7 @@ data$qMat<-(data$vMat/data$pMat)
 data$qLab<-(data$vLab/data$pLab)
 ```
 
-##Vérification du cout total
+##V?rification du cout total
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 
@@ -57,17 +57,17 @@ all.equal(data$cost, with( data, pCap * qCap + pLab * qLab + pMat * qMat ))
 #Statistiques descriptives
 
 
-On remarque que beaucoup de variables sont corrélées entre elles. Mais ces corrélations semblent logiques
+On remarque que beaucoup de variables sont corr?l?es entre elles. Mais ces corr?lations semblent logiques
 
 ##Etape 1
 
-Représentez les histogrammes des productivités moyennes des facteurs de production de Cap,
+Repr?sentez les histogrammes des productivit?s moyennes des facteurs de production de Cap,
 Lab et Mat.
 
-On considère donc les 3ieres colonnes
+On consid?re donc les 3ieres colonnes
 
-La productivité moyenne est : le nombre d'output / les moyens de production.
-On créer donc une nouvelle colonne : vcap / quout par exemple
+La productivit? moyenne est : le nombre d'output / les moyens de production.
+On cr?er donc une nouvelle colonne : vcap / quout par exemple
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data=as.data.table(data)
 data=data[,pmcap := qOut/vCap]
@@ -97,11 +97,11 @@ lines(density(data$pmmat), col='red',lwd=3)
 
 ##Etape 2 
 
-Etudiez les corrélations entre les quantités des 3 facteurs de production utilisés dans ce secteur
+Etudiez les corr?lations entre les quantit?s des 3 facteurs de production utilis?s dans ce secteur
 
-Donnez la matrice des corrélations, et représentez graphiquement le nuage de point correspondant aux différents croisements des productivités moyennes prises deux à deux.
-Représentez aussi les 3 séries de productivité moyenne par rapport à l'output total qOut.
-###Matrice des corrélations
+Donnez la matrice des corr?lations, et repr?sentez graphiquement le nuage de point correspondant aux diff?rents croisements des productivit?s moyennes prises deux ? deux.
+Repr?sentez aussi les 3 s?ries de productivit? moyenne par rapport ? l'output total qOut.
+###Matrice des corr?lations
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 databis<-data[,c(1,2,3,6)]
 M=cor(databis)
@@ -148,7 +148,7 @@ ggplot(data, aes(x=pmcap, y=qOut)) +
 
 ##Etape 3
 
-Indice de valeur = indice de prix × indice de volume
+Indice de valeur = indice de prix ? indice de volume
 indice de volume = indice de valeur / indice de prix
 
 ###Calcul des indices de Pasches, Laspeyres et Fisher
@@ -177,11 +177,11 @@ data=data[,qCap:= vCap/(pCap)]
 ```
 
 
-Calculez les indices de quantité des trois inputs utilisés en considérant soit un indice de Paasche soit celui de Laspeyres ou Fisher
+Calculez les indices de quantit? des trois inputs utilis?s en consid?rant soit un indice de Paasche soit celui de Laspeyres ou Fisher
 
 ##Etape 4
 
-Calculez un indice de productivité globale des facteurs.
+Calculez un indice de productivit? globale des facteurs.
 
 ```{r,warning=FALSE, comment=NA}
 data=as.data.table(data)
@@ -190,8 +190,8 @@ data=data[,PGF:= qOut/(data$XF)]
 
 ##Etape 5 
 
-Représentez l'histogramme de l'indice de productivité globale des facteurs, sa relation avec l'output,
-sa relation avec les indices de quantité de facteur de production
+Repr?sentez l'histogramme de l'indice de productivit? globale des facteurs, sa relation avec l'output,
+sa relation avec les indices de quantit? de facteur de production
 
 ```{r,warning=FALSE, comment=NA}
 par(mfrow=c(1,1))
@@ -211,7 +211,7 @@ ggplot(data, aes(x=PGF, y=qCap)) +
 
 ##Etape 6
 
-Représentez graphiquement (Boxplot) la productivité globale des facteurs pour les producteurs prenant conseil ou non.
+Repr?sentez graphiquement (Boxplot) la productivit? globale des facteurs pour les producteurs prenant conseil ou non.
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 #Box plots basiques
@@ -222,15 +222,15 @@ p
 
 Quelles sont les entreprises les plus performantes aux vues statistiques descriptives.
 
-#Estimation d'une fonction de production linéaire
+#Estimation d'une fonction de production lin?aire
 
 
 
-#Linéaire : 
+#Lin?aire : 
 
 $q_i$ = $\alpha + \sum_{k=1}^{3} \beta_k x_ik + \epsilon_i$
 
-Avec une fonction de production linéaire on suppose implicitement que les facteurs de production sont des substituts. 
+Avec une fonction de production lin?aire on suppose implicitement que les facteurs de production sont des substituts. 
 
 
 
@@ -247,28 +247,28 @@ stargazer(lm1, type="text")
 Obtenez-vous une fonction de production monotone croissante ?
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
-plot(lm1$fitted.values, main="production estimée par la RLS")# estimée
+plot(lm1$fitted.values, main="production estim?e par la RLS")# estim?e
 abline(lm1)
 ```
 
-La production trouvée n'est pas monotone croissante. 
+La production trouv?e n'est pas monotone croissante. 
 
-### Le coefficient associé au facteur de production du capital est il significatif ?
+### Le coefficient associ? au facteur de production du capital est il significatif ?
 
-La quantité de capitale n'est pas significative. Les autres quantités sont significatives au seuil de 1%. 
+La quantit? de capitale n'est pas significative. Les autres quantit?s sont significatives au seuil de 1%. 
 
 ###Peut-on dire que chaque facteur de production est essentiel ?
 
-Oui chaque facteur est essentiel à la production ce n'est pas parce que le coefficient du capital n'est pas significatif que l'on doit en déduire cela. Il faut surtout estimer une autre fonction de production. 
+Oui chaque facteur est essentiel ? la production ce n'est pas parce que le coefficient du capital n'est pas significatif que l'on doit en d?duire cela. Il faut surtout estimer une autre fonction de production. 
 
 
-###Comparer à l'aide d'un graphique la production observée et la production estimée
+###Comparer ? l'aide d'un graphique la production observ?e et la production estim?e
 
 ```{r}
 require(miscTools)
 compPlot(qOut,fitted(lm1))
-plot(qOut ,main="production observée") #observée
-plot(lm1$fitted.values, main="production estimée par la RLS")# estimée
+plot(qOut ,main="production observ?e") #observ?e
+plot(lm1$fitted.values, main="production estim?e par la RLS")# estim?e
 abline(lm1)
 ```
 ```{r}
@@ -276,27 +276,27 @@ plot(fitted(lm1))
 ```
 
 
-###Vérifier si la production est toujours positive
+###V?rifier si la production est toujours positive
 
 ```{r}
 sum(lm1$fitted.values< 0)
 sort(lm1$fitted.values)[1:5]
 
 ```
-Il y a une production estimée qui est négative
+Il y a une production estim?e qui est n?gative
 
-### Les élasticités
+### Les ?lasticit?s
 
 <ul>
-<li>Calculez pour chaque firme l'élasticité de l'output par rapport à chacun des trois inputs capital,travail et matériaux.</li>
-<li>Calculer la moyenne de ces élasticités sur l'échantillon.</li>
-<li>Représentez la distribution empirique des ces élasticités. </li>
+<li>Calculez pour chaque firme l'?lasticit? de l'output par rapport ? chacun des trois inputs capital,travail et mat?riaux.</li>
+<li>Calculer la moyenne de ces ?lasticit?s sur l'?chantillon.</li>
+<li>Repr?sentez la distribution empirique des ces ?lasticit?s. </li>
 </ul>
 
 
 
 ```{r}
-# Elasticités
+# Elasticit?s
 data[,eps_cap:=coef(lm1)["qCap"]*qCap/qOut]
 data[,eps_lab:=coef(lm1)["qLab"]*qLab/qOut]
 data[,eps_mat:=coef(lm1)["qMat"]*qMat/qOut]
@@ -311,7 +311,7 @@ ggplot(data, aes(x=eps_mat)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-# Comparaison avec la production estimée
+# Comparaison avec la production estim?e
 data[,eps_cap_fit:=coef(lm1)["qCap"]*qCap/fitted(lm1)]
 data[,eps_lab_fit:=coef(lm1)["qLab"]*qLab/fitted(lm1)]
 data[,eps_mat_fit:=coef(lm1)["qMat"]*qMat/fitted(lm1)]
@@ -326,7 +326,7 @@ ggplot(data, aes(x=eps_mat_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-#Elasticités d'échelle
+#Elasticit?s d'?chelle
 data[,eps_echelle:= eps_cap+eps_lab+eps_mat]
 data[,eps_echelle_fit:= eps_cap_fit+eps_lab_fit+eps_mat_fit]
 colMeans(data[, c("eps_echelle","eps_echelle_fit"), with=FALSE])
@@ -357,14 +357,14 @@ stargazer(lm2, type="text")
 ```
 
 
-##Normalité des résidus : 
+##Normalit? des r?sidus : 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 plot(lm1)
 ```
 
-On remarque que le nuage de point s'éloigne de la ligne pointillé
+On remarque que le nuage de point s'?loigne de la ligne pointill?
 
-Le test de Shapiro-Wilk peut également être employé pour évaluer la normalité des résidus. L'hypothèse de normalité est rejetée si la p-value est inférieure à 0.05.
+Le test de Shapiro-Wilk peut ?galement ?tre employ? pour ?valuer la normalit? des r?sidus. L'hypoth?se de normalit? est rejet?e si la p-value est inf?rieure ? 0.05.
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 shapiro.test(residuals(lm1))
@@ -377,13 +377,13 @@ lm2<-lm(log(qOut)~log(qLab)+log(qMat)+log(qCap), data=data)
 stargazer(lm2, type="text")
 ```
 
-La p-value est inférieur à 0.05 on rejette donc l'hypothèse de normalité de résidus. 
+La p-value est inf?rieur ? 0.05 on rejette donc l'hypoth?se de normalit? de r?sidus. 
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 tab1<-vcov(lm2)
 ```
 
-Calcul de la somme des 3 variances des facteurs de production. Pour pouvoir faire le test des rendements d'échelle.
+Calcul de la somme des 3 variances des facteurs de production. Pour pouvoir faire le test des rendements d'?chelle.
 
 $V(X + Y + Z) = V(X) + V(Y) + V(Z) + 2Cov(X,Y) + 2COV(X,Z) + 2COV(Y,Z)$
 
@@ -395,7 +395,7 @@ seescd<-sqrt(Var)
 ```
 
 
-on fait le test pour savoir si cette valeur est significativement différent de 1 pour savoir si on a des rendements constants. Les rendements sont donc croissants. 
+on fait le test pour savoir si cette valeur est significativement diff?rent de 1 pour savoir si on a des rendements constants. Les rendements sont donc croissants. 
 
 ##Test
 
@@ -419,7 +419,7 @@ lm3<-lm(log(qOut)~(log(qLab)+log(qMat)+log(qCap))^2+I(log(qMat)^2)+I(log(qCap)^2
 stargazer(lm3, type="text")
 ```
 
-Très grosse colinéarité faire vif test
+Tr?s grosse colin?arit? faire vif test
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 require(car)
 vif(lm3)
@@ -431,8 +431,8 @@ Pour les comparer il faut faire un test de Fisher.
 
 Faire regression du cout expliquer par le prix
 Ecrire une fonction de cout translog. 
-Est ce que les rendement d'echelles sont il liés au niveau de production ? Car rendement echelle ne sont pas 1.4 pour tout le monde, peut être 3 pour les petits et 1 pour les plus grands. 
-Il faut des rendement echelle lié au niveau de prod (taille entreprise). 
+Est ce que les rendement d'echelles sont il li?s au niveau de production ? Car rendement echelle ne sont pas 1.4 pour tout le monde, peut ?tre 3 pour les petits et 1 pour les plus grands. 
+Il faut des rendement echelle li? au niveau de prod (taille entreprise). 
 
 #Les fonctions de cout
 
