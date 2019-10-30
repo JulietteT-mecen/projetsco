@@ -1,7 +1,7 @@
 ---
-title: "Pommes"
-author: "Thiret Juliette"
-date: "7 octobre 2019"
+title: "√âtude de la production de pommes"
+author: "Maurice Thomas & Thiret Juliette"
+date: "30 octobre 2019"
 output: html_document
 ---
 
@@ -14,19 +14,18 @@ require(data.table)
 require(corrplot)
 require(ggplot2)
 require(lmtest)
-setwd("C:/Users/PDX/Desktop/M2/Mesure et perf")
+require(miscTools)
+require(stargazer)
+```
+
+```{r}
+setwd("C:/Users/PDX/Desktop/Cours/M2/Mesure et perf/projetsco")
 data=read.csv("Pommes.csv",sep=";",dec=",")
 data=as.data.table(data)
 ```
 
-#TAF
-<ul>
-<li>Faire un trie par profit et faire ACP.</li>
-<li>Correlation entre erreur entre production estimÈe et production rÈellee en fonction du profit.</li>  
-</ul>
 
-
-#Manipulation de la base de donnÈes
+#Manipulation de la base de donn√©es
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data<-data[,-1]
 ```
@@ -36,27 +35,29 @@ summary(data)
 str(data)
 ```
 
-Toutes les variables sont bien codÈes.
+Toutes les variables sont bien cod√©es.
 
-```{r,warning=FALSE, comment=NA, message=FALSE}
+```{r,warning=FALSE, comment=NA, message=FALSE, echo=TRUE}
 data$adv<-as.factor(data$adv)
 ```
 
 
-##CrÈation de variables : les quantitÈs de facteurs
+**Cr√©ation de variables : les quantit√©s de facteurs**
 
-```{r,warning=FALSE, comment=NA, message=FALSE}
+```{r,warning=FALSE, comment=NA, message=FALSE,echo=TRUE}
 data$qCap<-(data$vCap/data$pCap)
 data$qMat<-(data$vMat/data$pMat)
 data$qLab<-(data$vLab/data$pLab)
 ```
 
-##VÈrification du cout total
+V√©rification du cout total
 
-```{r,warning=FALSE, comment=NA, message=FALSE}
-
+```{r,warning=FALSE, comment=NA,echo=TRUE}
+#cout total
 data[,cost:=vCap+vLab+vMat]
 all.equal(data$cost, with( data, pCap * qCap + pLab * qLab + pMat * qMat )) 
+#cout variable
+data[,vCost:=vLab+vMat]
 
 ```
 
@@ -64,17 +65,18 @@ all.equal(data$cost, with( data, pCap * qCap + pLab * qLab + pMat * qMat ))
 #Statistiques descriptives
 
 
-On remarque que beaucoup de variables sont corrÈlÈes entre elles. Mais ces corrÈlations semblent logiques
+On remarque que beaucoup de variables sont corr√©l√©es entre elles. Mais ces corr√©lations semblent logiques
 
-##Etape 1
+**Etape 1: Histogrammes**
 
-ReprÈsentez les histogrammes des productivitÈs moyennes des facteurs de production de Cap,
+Repr√©sentez les histogrammes des productivit√©s moyennes des facteurs de production de Cap,
 Lab et Mat.
 
-On considËre donc les 3ieres colonnes
+On consid√®re donc les 3ieres colonnes
 
-La productivitÈ moyenne est : le nombre d'output / les moyens de production.
-On crÈer donc une nouvelle colonne : vcap / quout par exemple
+La productivit√© moyenne est : le nombre d'output / les moyens de production.
+On cr√©er donc une nouvelle colonne : vcap / qout par exemple.
+
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 data=as.data.table(data)
 data=data[,pmcap := qOut/vCap]
@@ -90,35 +92,37 @@ data=as.data.table(data)
 data=data[,pmmat := qOut/vMat]
 ```
 
-Histogramme
+
+**Histogrammes des productivit√©s moyennes**
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 par(mfrow=c(1,1))
-hist(data$pmcap, breaks = 50,probability = T)
-lines(density(data$pmcap), col='red',lwd=3)
-hist(data$pmlab,breaks= 50)
-lines(density(data$pmlab), col='red',lwd=3)
-hist(data$pmmat, breaks = 50)
-lines(density(data$pmmat), col='red',lwd=3)
+ggplot(data, aes(x=pmcap)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666")
+ggplot(data, aes(x=pmlab)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666")
+ggplot(data, aes(x=pmmat)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666")
 ```
 
 
-##Etape 2 
+**Etape 2** : Etude des corr√©lations.
 
-Etudiez les corrÈlations entre les quantitÈs des 3 facteurs de production utilisÈs dans ce secteur
+Etudiez les corr√©lations entre les quantit√©s des 3 facteurs de production utilis√©s dans ce secteur
 
-Donnez la matrice des corrÈlations, et reprÈsentez graphiquement le nuage de point correspondant aux diffÈrents croisements des productivitÈs moyennes prises deux ‡ deux.
-ReprÈsentez aussi les 3 sÈries de productivitÈ moyenne par rapport ‡ l'output total qOut.
-###Matrice des corrÈlations
+Donnez la matrice des corr√©lations, et repr√©sentez graphiquement le nuage de point correspondant aux diff√©rents croisements des productivit√©s moyennes prises deux √† deux.
+Repr√©sentez aussi les 3 s√©ries de productivit√© moyenne par rapport √† l'output total qOut.
+###Matrice des corr√©lations
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 databis<-data[,c(1,2,3,6)]
 M=cor(databis)
 corrplot(M,type="lower", addCoef.col="red", method="shade")
-help(corrplot)
 ```
 
 ###Nuage de point
 
-entre pmlab et pmcap
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 par(mfrow=c(2,2))
 ggplot(data, aes(x=pmlab, y=pmcap)) + 
@@ -142,7 +146,7 @@ ggplot(data, aes(x=pmlab, y=qOut)) +
   geom_point()+
   geom_smooth(method=lm)
 
-ggplot(data, aes(x=pmlab, y=qOut)) + 
+ggplot(data, aes(x=pmmat, y=qOut)) + 
   geom_point()+
   geom_smooth(method=lm)
 
@@ -153,58 +157,37 @@ ggplot(data, aes(x=pmcap, y=qOut)) +
 ```
 
 
-##Etape 3
+**Etape 3** : Calcul des indices de Pasches, Laspeyres et Fisher
 
-Indice de valeur = indice de prix ◊ indice de volume
+Indice de valeur = indice de prix √ó indice de volume
 indice de volume = indice de valeur / indice de prix
 
-###Calcul des indices de Pasches, Laspeyres et Fisher
 
-
-```{r,warning=FALSE, comment=NA, message=FALSE}
-
-data$XP <- with( data,
-+ ( vCap + vLab + vMat ) /
-+ ( mean( qCap ) * pCap + mean( qLab ) * pLab + mean( qMat ) * pMat ) )
-
-data$XL <- with( data,
-+ ( qCap * mean( pCap ) + qLab * mean( pLab ) + qMat * mean( pMat ) ) /
-+ ( mean( qCap ) * mean( pCap ) + mean( qLab ) * mean( pLab ) +
-+ mean( qMat ) * mean( pMat ) ) )
-
-data$XF<-sqrt(data$XP*data$XL)
-
+```{r,warning=FALSE, comment=NA, message=FALSE,echo=TRUE}
+data[,XP:=(vCap+vLab+vMat) / (mean(qCap)*pCap + mean(qLab)*pLab + mean(qMat)*pMat)]
+data[,XL:=(qCap*mean(pCap) + qLab*mean(pLab) + qMat*mean(pMat)) /
+       (mean(qCap)*mean(pCap) + mean(qLab)*mean(pLab) + mean(qMat)*mean(pMat))]
+data[,XF:=sqrt(XP*XL)]
 
 ```
 
 
-```{r,warning=FALSE, comment=NA, message=FALSE}
-data=as.data.table(data)
-data=data[,qCap:= vCap/(pCap)]
+
+**Etape 4** : Calcul d'un indice de productivit√© globale des facteurs
+
+
+```{r,warning=FALSE, comment=NA,echo=TRUE}
+data[,PGF:= qOut/XF]
 ```
 
+**Etape 5** : Productivit√© globale et relations avec les quantit√©s de facteurs
 
-Calculez les indices de quantitÈ des trois inputs utilisÈs en considÈrant soit un indice de Paasche soit celui de Laspeyres ou Fisher
+Repr√©sentez l'histogramme de l'indice de productivit√© globale des facteurs, sa relation avec l'output, sa relation avec les indices de quantit√© de facteur de production
 
-##Etape 4
-
-Calculez un indice de productivitÈ globale des facteurs.
-
-```{r,warning=FALSE, comment=NA}
-data=as.data.table(data)
-data=data[,PGF:= qOut/(data$XF)]
-```
-
-##Etape 5 
-
-ReprÈsentez l'histogramme de l'indice de productivitÈ globale des facteurs, sa relation avec l'output,
-sa relation avec les indices de quantitÈ de facteur de production
-
-```{r,warning=FALSE, comment=NA}
-par(mfrow=c(1,1))
-hist(data$PGF, breaks = 50,probability = T)
-lines(density(data$PGF), col='red',lwd=3)
-
+```{r,warning=FALSE, comment=NA,echo=TRUE}
+ggplot(data, aes(x=PGF)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666")
 ```
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
@@ -214,11 +197,17 @@ ggplot(data, aes(x=PGF, y=qOut)) +
 ggplot(data, aes(x=PGF, y=qCap)) + 
   geom_point()+
   geom_smooth(method=lm)
+ggplot(data, aes(x=PGF, y=qLab)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+ggplot(data, aes(x=PGF, y=qMat)) + 
+  geom_point()+
+  geom_smooth(method=lm)
 ```
 
-##Etape 6
+**Etape 6** : Boxplots
 
-ReprÈsentez graphiquement (Boxplot) la productivitÈ globale des facteurs pour les producteurs prenant conseil ou non.
+Repr√©sentez graphiquement (Boxplot) la productivit√© globale des facteurs pour les producteurs prenant conseil ou non.
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 #Box plots basiques
@@ -227,21 +216,19 @@ p <- ggplot(data, aes(x=adv, y=PGF,color=adv)) +
 p 
 ```
 
-Quelles sont les entreprises les plus performantes aux vues statistiques descriptives.
+**Quelles sont les entreprises les plus performantes aux vues statistiques descriptives.**
 
-#Estimation d'une fonction de production linÈaire
-
-
-
-#LinÈaire : 
-
-$q_i$ = $\alpha + \sum_{k=1}^{3} \beta_k x_ik + \epsilon_i$
-
-Avec une fonction de production linÈaire on suppose implicitement que les facteurs de production sont des substituts. 
+=> R√©pondre 
 
 
+#Estimation des fonctions de production lin√©aire
 
 
+## Lin√©aire 
+
+$$q_i = \alpha + \sum_{k=1}^{3} \beta_k x_ik + \epsilon_i$$
+
+Avec une fonction de production lin√©aire on suppose implicitement que les facteurs de production sont des substituts. 
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 require(stargazer)
@@ -254,56 +241,59 @@ stargazer(lm1, type="text")
 Obtenez-vous une fonction de production monotone croissante ?
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
-plot(lm1$fitted.values, main="production estimÈe par la RLS")# estimÈe
+plot(lm1$fitted.values, main="production estim√©e par la RLS")# estim√©e
 abline(lm1)
 ```
 
-La production trouvÈe n'est pas monotone croissante. 
+La production trouv√©e n'est pas monotone croissante. 
 
-### Le coefficient associÈ au facteur de production du capital est il significatif ?
+** Le coefficient associ√© au facteur de production du capital est il significatif ? **
 
-La quantitÈ de capitale n'est pas significative. Les autres quantitÈs sont significatives au seuil de 1%. 
+La quantit√© de capitale n'est pas significative. Les autres quantit√©s sont significatives au seuil de 1%. 
 
-###Peut-on dire que chaque facteur de production est essentiel ?
+**Peut-on dire que chaque facteur de production est essentiel ?**
 
-Oui chaque facteur est essentiel ‡ la production ce n'est pas parce que le coefficient du capital n'est pas significatif que l'on doit en dÈduire cela. Il faut surtout estimer une autre fonction de production. 
+Oui chaque facteur est essentiel √† la production ce n'est pas parce que le coefficient du capital n'est pas significatif que l'on doit en d√©duire cela. Il faut surtout estimer une autre fonction de production. 
 
 
-###Comparer ‡ l'aide d'un graphique la production observÈe et la production estimÈe
+**Comparer √† l'aide d'un graphique la production observ√©e et la production estim√©e **
 
-```{r}
-require(miscTools)
-compPlot(qOut,fitted(lm1))
-plot(qOut ,main="production observÈe") #observÈe
-plot(lm1$fitted.values, main="production estimÈe par la RLS")# estimÈe
-abline(lm1)
-```
-```{r}
-plot(fitted(lm1))
+```{r,warning=FALSE, comment=NA, message=FALSE}
+compPlot(data$qOut, fitted(lm1))
+sum(fitted(lm1) < 0 )
+coef(lm1)
 ```
 
 
-###VÈrifier si la production est toujours positive
+**V√©rifier si la production est toujours positive **
 
-```{r}
+```{r,warning=FALSE, comment=NA, message=FALSE}
+
 sum(lm1$fitted.values< 0)
 sort(lm1$fitted.values)[1:5]
 
 ```
-Il y a une production estimÈe qui est nÈgative
+Il y a une production estim√©e qui est n√©gative
 
-### Les ÈlasticitÈs
+### Les √©lasticit√©s
 
 <ul>
-<li>Calculez pour chaque firme l'ÈlasticitÈ de l'output par rapport ‡ chacun des trois inputs capital,travail et matÈriaux.</li>
-<li>Calculer la moyenne de ces ÈlasticitÈs sur l'Èchantillon.</li>
-<li>ReprÈsentez la distribution empirique des ces ÈlasticitÈs. </li>
+<li>Calculez pour chaque firme l'√©lasticit√© de l'output par rapport √† chacun des trois inputs capital,travail et mat√©riaux.</li>
+<li>Calculer la moyenne de ces √©lasticit√©s sur l'√©chantillon.</li>
+<li>Repr√©sentez la distribution empirique des ces √©lasticit√©s. </li>
 </ul>
 
+$$\epsilon_i =  \frac{\partial f(x)}{\partial x_i} \frac {x_i}{f(x)} $$
 
+```{r,message=FALSE, warning=FALSE, comment=NA}
+data[,eps_cap:=coef(lm1)["qCap"]*qCap/qOut]
+data[,eps_lab:=coef(lm1)["qLab"]*qCap/qOut]
+data[,eps_mat:=coef(lm1)["qMat"]*qCap/qOut]
+
+```
 
 ```{r}
-# ElasticitÈs
+# Elasticit√©s
 data[,eps_cap:=coef(lm1)["qCap"]*qCap/qOut]
 data[,eps_lab:=coef(lm1)["qLab"]*qLab/qOut]
 data[,eps_mat:=coef(lm1)["qMat"]*qMat/qOut]
@@ -318,81 +308,92 @@ ggplot(data, aes(x=eps_mat)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.2, fill="#FF6666")
 
-# Comparaison avec la production estimÈe
+# Comparaison avec la production estim√©e
 data[,eps_cap_fit:=coef(lm1)["qCap"]*qCap/fitted(lm1)]
 data[,eps_lab_fit:=coef(lm1)["qLab"]*qLab/fitted(lm1)]
 data[,eps_mat_fit:=coef(lm1)["qMat"]*qMat/fitted(lm1)]
 colMeans(data[, c("eps_cap_fit","eps_lab_fit","eps_mat_fit"), with=FALSE])
 ggplot(data, aes(x=eps_cap_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
-  geom_density(alpha=.2, fill="#FF6666")
+  geom_density(alpha=.2, fill="#FF6666")+
+  ggtitle("√©lasticit√© estim√©e du capital")
 ggplot(data, aes(x=eps_lab_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
-  geom_density(alpha=.2, fill="#FF6666")
+  geom_density(alpha=.2, fill="#FF6666")+
+  ggtitle("√©lasticit√© estim√©e du travail")
 ggplot(data, aes(x=eps_mat_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
-  geom_density(alpha=.2, fill="#FF6666")
+  geom_density(alpha=.2, fill="#FF6666")+
+  ggtitle("√©lasticit√© estim√©e du mat√©riel")
 
-#ElasticitÈs d'Èchelle
+#Elasticit√©s d'√©chelle
 data[,eps_echelle:= eps_cap+eps_lab+eps_mat]
 data[,eps_echelle_fit:= eps_cap_fit+eps_lab_fit+eps_mat_fit]
 colMeans(data[, c("eps_echelle","eps_echelle_fit"), with=FALSE])
 ggplot(data, aes(x=eps_echelle)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
-  geom_density(alpha=.2, fill="#FF6666")
+  geom_density(alpha=.2, fill="#FF6666")+
+  ggtitle("√©lasticit√© d'√©chelle")
+
 ggplot(data, aes(x=eps_echelle_fit)) +
   geom_histogram(aes(y=..density..), colour="black", fill="white")+
-  geom_density(alpha=.2, fill="#FF6666")
+  geom_density(alpha=.2, fill="#FF6666")+
+  ggtitle("√©lasticit√© d'√©chelle estim√©e")
 ```
-
-
-$\epsilon_i =  \frac{\partial f(x)}{\partial x_i} \frac {x_i}{f(x)} $
-
-
-```{r,message=FALSE, warning=FALSE, comment=NA}
-data[,eps_cap:=coef(lm1)["qCap"]*qCap/qOut]
-data[,eps_lab:=coef(lm1)["qLab"]*qCap/qOut]
-data[,eps_mat:=coef(lm1)["qMat"]*qCap/qOut]
-
-```
-
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
-require(stargazer)
-lm2<-lm(log(qOut)~log(qLab)+log(qMat)+log(qCap), data=data)
-stargazer(lm2, type="text")
+### Taux marginal de substitution technique
+tmst_CapLab=-coef(lm1)["qLab"] / coef(lm1)["qCap"]
+tmst_CapMat=-coef(lm1)["qMat"] / coef(lm1)["qCap"]
+tmst_LabCap=-coef(lm1)["qCap"] / coef(lm1)["qLab"]
+tmst_LabMat=-coef(lm1)["qMat"] / coef(lm1)["qLab"]
+tmst_MatCap=-coef(lm1)["qCap"] / coef(lm1)["qMat"]
+tmst_MatLab=-coef(lm1)["qLab"] / coef(lm1)["qMat"]
+
+### Taux Marginal relatif de substitution technique 
+data[,tmrst_CapLab:=-eps_lab/eps_cap]
+data[,tmrst_CapMat:=-eps_mat/eps_cap]
+data[,tmrst_LabCap:=-eps_cap/eps_lab]
+data[,tmrst_LabMat:=-eps_mat/eps_lab]
+data[,tmrst_MatCap:=-eps_cap/eps_mat]
+data[,tmrst_MatLab:=-eps_lab/eps_mat]
+colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 ```
 
 
-##NormalitÈ des rÈsidus : 
+
+
+
+
+**Normalit√© des r√©sidus** 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 plot(lm1)
 ```
 
-On remarque que le nuage de point s'Èloigne de la ligne pointillÈ
+On remarque que le nuage de point s'√©loigne de la ligne pointill√©
 
-Le test de Shapiro-Wilk peut Ègalement Ítre employÈ pour Èvaluer la normalitÈ des rÈsidus. L'hypothËse de normalitÈ est rejetÈe si la p-value est infÈrieure ‡ 0.05.
+Le test de Shapiro-Wilk peut √©galement √™tre employ√© pour √©valuer la normalit√© des r√©sidus. L'hypoth√®se de normalit√© est rejet√©e si la p-value est inf√©rieure √† 0.05.
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 shapiro.test(residuals(lm1))
 ```
 
-#Cobb-Douglass
+##Cobb-Douglass
+$$q_i = A\prod_{k=1}^{3}x_{ik}^{\alpha k}\epsilon_i $$
 ```{r,warning=FALSE, comment=NA, message=FALSE}
-require(stargazer)
 lm2<-lm(log(qOut)~log(qLab)+log(qMat)+log(qCap), data=data)
 stargazer(lm2, type="text")
 ```
 
-La p-value est infÈrieur ‡ 0.05 on rejette donc l'hypothËse de normalitÈ de rÈsidus. 
+La p-value est inf√©rieur √† 0.05 on rejette donc l'hypoth√®se de normalit√© de r√©sidus. 
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 tab1<-vcov(lm2)
 ```
 
-Calcul de la somme des 3 variances des facteurs de production. Pour pouvoir faire le test des rendements d'Èchelle.
+Calcul de la somme des 3 variances des facteurs de production. Pour pouvoir faire le test des rendements d'√©chelle.
 
-$V(X + Y + Z) = V(X) + V(Y) + V(Z) + 2Cov(X,Y) + 2COV(X,Z) + 2COV(Y,Z)$
+$$V(X + Y + Z) = V(X) + V(Y) + V(Z) + 2Cov(X,Y) + 2COV(X,Z) + 2COV(Y,Z)$$
 
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
@@ -401,66 +402,101 @@ Var
 seescd<-sqrt(Var)
 ```
 
+On fait le test pour savoir si cette valeur est significativement diff√©rent de 1 pour savoir si on a des rendements constants. Les rendements sont donc croissants. 
 
-on fait le test pour savoir si cette valeur est significativement diffÈrent de 1 pour savoir si on a des rendements constants. Les rendements sont donc croissants. 
 
-##Test
+
+OU (autre m√©thode)
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
+# Intervalle des rendements d'echelle
+shapiro.test(residuals(lm2))
+vcov(lm2)
 est=sum(lm2$coefficients[-1])
+dESCD=c( 0, 1, 1, 1 )
+varESCD=t(dESCD) %*% vcov(lm2) %*% dESCD
+seESCD=sqrt( varESCD )
+est+1.96*seESCD
+est-1.96*seESCD
 ```
 
-```{r}
-est+1.96*seescd
-est-1.96*seescd
-
-```
-
-1 n'est pas dans l'intervalle ce qui signifie que les rendements d'echelle ne sont pas constants. 
+**1 n'est pas dans l'intervalle ce qui signifie que les rendements d'echelle ne sont pas constants. **
 
 
-#Translog
+##Translog
+
+$$q_i = \alpha + \sum_{k=1}^{3} \beta_k lnx_{ik} + \frac{1}{2} \sum_{l=1}^{3}\sum_{k=1}^{3} \beta_{kl}lnx_{ik}lnx_{il}  +\epsilon_i$$
+
 ```{r,warning=FALSE, comment=NA, message=FALSE}
-require(stargazer)
 lm3<-lm(log(qOut)~(log(qLab)+log(qMat)+log(qCap))^2+I(log(qMat)^2)+I(log(qCap)^2)+I(log(qLab)^2), data=data)
 stargazer(lm3, type="text")
 ```
 
-TrËs grosse colinÈaritÈ faire vif test
+Tr√®s grosse colin√©arit√© il faut faire vif test !
+
+ Test entre Cobb Douglass et Translog
+A faire test de Fisher o√π $H_0$ est le modele contraint (Cobb Douglass) et $H_1$ non contraint (Translog) 
+
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 require(car)
 vif(lm3)
 ```
 
-##Test entre Cobb Douglass et Translog
-A faire test de Fisher o˘ $H_0$ est le modele contraint (Cobb Douglass) et $H_1$ non contraint. 
-On peut faire une validation descendante pour regarder plus en dÈtail les paramËtres. 
+Fonction pour faire le test manuellement : 
+
+```{r}
+f_test=function(contraint,non_contraint,seuil){
+  rcontraint=summary(contraint)$r.squared
+  rnoncontraint=summary(non_contraint)$r.squared
+  Q=length(non_contraint$coefficients)-length(contraint$coefficients)
+  resultat=((rnoncontraint-rcontraint)/(1-rnoncontraint))*(non_contraint$df.residual/Q)
+  alpha=1-seuil
+  F_theo=qf(alpha,Q,non_contraint$df.residual)
+  if (resultat>F_theo){
+    print(paste(round(resultat,3),"est strictement sup√©rieur √† la statistique th√©orique de Fisher, on rejette l'hypoth√®se nulle",sep=" "))
+  }else {
+    print(paste(round(resultat,3),"est inf√©rieur √† la statistique th√©orique de Fisher, on ne peux pas rejeter l'hypoth√®se nulle",sep=" "))
+  }
+  
+}
+```
+
+```{r}
+f_test(lm2,lm3,0.05)
+```
 
 
-
-#Quadratique
-
+## Quadratique
+$$q_i = \alpha + \sum_{k=1}^{3} \beta_k x_{ik} + \frac{1}{2} \sum_{l=1}^{3}\sum_{k=1}^{3} \beta_{kl}x_{ik}x_{il}  +\epsilon_i $$
 ```{r}
 prodQuad <- lm( qOut ~ qCap + qLab + qMat + I( 0.5 * qCap^2 ) + I( 0.5 * qLab^2 ) + I( 0.5 * qMat^2 )+ I( qCap * qLab ) + I( qCap * qMat ) + I( qLab * qMat ), data = data )
 stargazer(prodQuad,type='text')
 ```
 
+##CES
 
+```{r}
+lmces_CapLab=lm(log(qCap/qLab) ~ log(pLab/pCap), data=data)
+lmces_CapMat=lm(log(qCap/qMat) ~ log(pMat/pCap), data=data)
+lmces_LabCap=lm(log(qLab/qCap) ~ log(pCap/pLab), data=data)
+lmces_LabMat=lm(log(qLab/qMat) ~ log(pMat/pLab), data=data)
+lmces_MatCap=lm(log(qMat/qCap) ~ log(pCap/pMat), data=data)
+lmces_MatLab=lm(log(qMat/qLab) ~ log(pLab/pMat), data=data)
+ces_list=c("lmces_CapLab","lmces_CapMat","lmces_LabCap","lmces_LabMat","lmces_MatCap","lmces_MatLab")
+for (i in ces_list){
+  stargazer(get(i),type="text")
+}
+rm(i)
 
-##Comparaison translog et CD
-Pour les comparer il faut faire un test de Fisher.
+```
 
-Faire regression du cout expliquer par le prix
-Ecrire une fonction de cout translog. 
-Est ce que les rendement d'echelles sont il liÈs au niveau de production ? Car rendement echelle ne sont pas 1.4 pour tout le monde, peut Ítre 3 pour les petits et 1 pour les plus grands. 
-Il faut des rendement echelle liÈ au niveau de prod (taille entreprise). 
 
 #Les fonctions de cout
 
 
 ##Cobb Douglass
 
-$c_i = A	\prod_{k=1}^{3} p_{ik}^{\alpha k} q_{i}^{\alpha y} \epsilon_i)$
+$$c_i = A	\prod_{k=1}^{3} p_{ik}^{\alpha k} q_{i}^{\alpha y} \epsilon_i$$
 
 
 ```{r}
@@ -468,43 +504,30 @@ reg_cout_CD <- lm( log( cost ) ~ log( pCap ) + log( pLab ) + log( pMat ) + log( 
 stargazer(reg_cout_CD, type='text')
 ```
 
-On remarque que le capital n'est significatif qu'‡ 10% tandis que les autres facteurs de productions sont significatifs ‡ 1%.
+On remarque que le capital n'est significatif qu'√† 10% tandis que les autres facteurs de productions sont significatifs √† 1%.
 
 ## Cobb-Douglass de court terme
 
 
 
-$c_i = A  x_{i3}^{\alpha3}	\prod_{k=1}^{2} p_{ik}^{\alpha k} q_{i}^{\alpha y} \epsilon_i)$
+$$c_i = A  x_{i3}^{\alpha3}	\prod_{k=1}^{2} p_{ik}^{\alpha k} q_{i}^{\alpha y} \epsilon_i)$$
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 require(stargazer)
-data$vCost <- with( data, vLab + vMat)
 costCDSR <- lm( log( vCost ) ~ log( pLab ) + log( pMat ) + log( qCap ) + log( qOut ), data = data )
 stargazer(costCDSR, type='text')
 ```
 
 
 ##Translog
+
+$$ln c_i = \alpha + \sum_{k=1}^{3} \beta_k + ln p_{ik} + \alpha_q ln(q_i)+ \frac{1}{2} \sum_{l=1}^{3}\sum_{k=1}^{3} \beta_{kl}lnp_{ik}lnp_{il} + \frac{1}{2} \alpha_{qq} (ln(q_i))¬≤ + \frac{1}{2} \sum_{k=1}^{3}\alpha_{kq}lnp_{ik}lnq_{i} + \epsilon_i    $$
+
+
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 costTL <- lm( log( cost ) ~ log( pCap ) + log( pLab ) + log( pMat ) + log( qOut ) + I( 0.5 * log( pCap )^2 ) + I( 0.5 * log( pLab )^2 ) + I( 0.5 * log( pMat )^2 ) + I( log( pCap ) * log( pLab ) ) + I( log( pCap ) * log( pMat ) ) + I( log( pLab ) * log( pMat ) ) + I( 0.5 * log( qOut )^2 ) + I( log( pCap ) * log( qOut ) ) + I( log( pLab ) * log( qOut ) ) + I( log( pMat ) * log( qOut ) ), data = data )
 stargazer(costTL,type='text')
 ```
 
 
-##CES
-Travail capital
-```{r,warning=FALSE, comment=NA, message=FALSE}
-lmCES<-lm(log(qCap/qLab)~ log(pLab/pCap))
-stargazer(lmCES,type='text')
-```
 
-MatÈriel et travail
-```{r,warning=FALSE, comment=NA, message=FALSE}
-lmCES2<-lm(log(qMat/qLab)~ log(pLab/pMat))
-stargazer(lmCES2,type='text')
-```
-
-```{r,warning=FALSE, comment=NA, message=FALSE}
-lmCES3<-lm(log(qCap/qMat)~ log(pMat/pCap))
-stargazer(lmCES3r,type='text')
-```
