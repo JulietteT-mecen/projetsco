@@ -16,6 +16,8 @@ require(ggplot2)
 require(lmtest)
 require(miscTools)
 require(stargazer)
+require(frontier)
+require(questionr)
 ```
 
 ```{r}
@@ -50,6 +52,17 @@ data$qMat<-(data$vMat/data$pMat)
 data$qLab<-(data$vLab/data$pLab)
 ```
 
+
+**Calcul des productions moyennes de chaque input**
+
+```{r,comment=NA}
+data[,apCap:=qOut/qCap]
+data[,apLab:=qOut/qLab]
+data[,apMat:=qOut/qMat]
+
+```
+
+
 Vérification du cout total
 
 ```{r,warning=FALSE, comment=NA,echo=TRUE}
@@ -66,6 +79,121 @@ data[,vCost:=vLab+vMat]
 
 
 On remarque que beaucoup de variables sont corrélées entre elles. Mais ces corrélations semblent logiques
+
+
+**\'{E}tude des couts de production**
+
+Part des couts dans le cout total
+
+```{r}
+data$sh_Lab<-round(data$vLab/data$cost,2)
+data$sh_Mat<-round(data$vMat/data$cost,2)
+data$sh_Cap<-round(data$vCap/data$cost,2)
+
+```
+
+```{r}
+boxplot(data$sh_Lab,data$sh_Cap,data$sh_Mat,names = c("Part du travail", "Part du capital", "Part des matériaux"),main="Part des inputs de production dans le cout total")
+```
+
+Part du travail est celle qui a une plus grande part dans la production, suivi des matériaux et du capital. 
+
+
+
+```{r,comment=NA}
+ggplot(data) +
+  aes(x = data$qOut, y = data$sh_Lab) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du travail")
+```
+
+```{r,comment=NA}
+ggplot(data) +
+  aes(x = data$qOut, y = data$sh_Cap) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Capital")
+```
+
+```{r,comment=NA}
+ggplot(data) +
+  aes(x = data$qOut, y = data$sh_Mat) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Matériel")
+```
+
+On remarque que les intervalles de confiance sont très grand, ce qui signifie que pour quelques outliers (gros producteurs) biaisent la tendance général. Nous proposons donc de créer une variable qualitative qui prend soit la modalité petit_producteur et gros_producteur. Cela permettra d'avoir une analyse plus fine des parts des inputs dans la production.
+
+*Création de la variable Taille_producteur*
+```{r,comment=NA}
+data$taille_producteur<-NA
+data$taille_producteur <- ifelse(data$qOut < 3152400, "petit_producteur", "gros_producteur")
+```
+
+
+**Petit producteur vs gros producteur**
+```{r,comment=NA}
+ggplot(data[taille_producteur=="petit_producteur"]) +
+  aes(x = qOut, y = sh_Mat) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Matériel")
+```
+```{r,comment=NA}
+ggplot(data[taille_producteur=="gros_producteur"]) +
+  aes(x = qOut, y = sh_Mat) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Matériel")
+```
+
+
+```{r,comment=NA}
+ggplot(data[taille_producteur=="petit_producteur"]) +
+  aes(x = qOut, y = sh_Cap) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Capital")
+```
+
+```{r,comment=NA}
+ggplot(data[taille_producteur=="gros_producteur"]) +
+  aes(x = qOut, y = sh_Cap) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du Matériel")
+```
+
+```{r,comment=NA}
+ggplot(data[taille_producteur=="petit_producteur"]) +
+  aes(x = qOut, y = sh_Lab) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du ")
+```
+
+```{r,comment=NA}
+ggplot(data[taille_producteur=="gros_producteur"]) +
+  aes(x = qOut, y = sh_Lab) +
+  geom_smooth() +
+  geom_point() +
+  xlab("Production totale") +
+  ylab("Part du ")
+```
+
+
+
+
 
 **Etape 1: Histogrammes**
 
@@ -180,6 +308,11 @@ data[,XF:=sqrt(XP*XL)]
 data[,PGF:= qOut/XF]
 ```
 
+```{r}
+ggplot(data, aes(x=PGF, y=qOut, shape=taille_producteur, color=taille_producteur)) +
+  geom_point()
+```
+
 **Etape 5** : Productivité globale et relations avec les quantités de facteurs
 
 Représentez l'histogramme de l'indice de productivité globale des facteurs, sa relation avec l'output, sa relation avec les indices de quantité de facteur de production
@@ -216,9 +349,22 @@ p <- ggplot(data, aes(x=adv, y=PGF,color=adv)) +
 p 
 ```
 
+
+```{r}
+tab<-table(data$taille_producteur, data$adv)
+tab
+```
+
+
+```{r}
+barplot(cprop(tab, total = FALSE), main = "Prise de conseil selon l'échelle de production")
+
+```
+
+
 **Quelles sont les entreprises les plus performantes aux vues statistiques descriptives.**
 
-=> Répondre 
+=> cf feuille
 
 
 #Estimation des fonctions de production linéaire
@@ -361,10 +507,6 @@ colMeans(data[, c("tmrst_CapLab","tmrst_MatLab"), with=FALSE])
 ```
 
 
-
-
-
-
 **Normalité des résidus** 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 plot(lm1)
@@ -379,13 +521,44 @@ shapiro.test(residuals(lm1))
 ```
 
 ##Cobb-Douglass
-$$q_i = A\prod_{k=1}^{3}x_{ik}^{\alpha k}\epsilon_i $$
+
+$$q_i = A\prod_{k=1}^{3}x_{ik}^{\alpha k}\epsilon_i + w $$
+
+
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 lm2<-lm(log(qOut)~log(qLab)+log(qMat)+log(qCap), data=data)
 stargazer(lm2, type="text")
 ```
 
+
 La p-value est inférieur à 0.05 on rejette donc l'hypothèse de normalité de résidus. 
+**Calcul des productivité marginale de chaque input**
+```{r,comment=NA}
+data[,mpCap:=coef(lm2)["log(qCap)"]*apCap]
+data[,mpLab:=coef(lm2)["log(qLab)"]*apLab]
+data[,mpMat:=coef(lm2)["log(qMat)"]*apMat]
+
+```
+
+**TMST : Taux marginale de substitution technique**
+
+```{r,comment=NA}
+ data$TMST_CapLabCD <- - data$mpLab / data$mpCap
+ data$TMST_LabCapCD <- - data$mpCap / data$mpLab
+ data$TMST_CapMatCD <- - data$mpMat / data$mpCap
+ data$TMST_MatCapCD <- - data$mpCap / data$mpMat
+ data$TMST_LabMatCD <- - data$mpMat / data$mpLab
+ data$TMST_MatLabCD <- - data$mpLab / data$mpMat
+```
+
+```{r,comment=NA}
+colMeans(data[, c("TMST_CapLabCD","TMST_CapMatCD","TMST_LabCapCD",
+                  "TMST_LabMatCD","TMST_MatCapCD","TMST_MatLabCD"), with=FALSE])
+
+```
+
+
+Le prix du capital en unité de matériaux et de 15, le prix du cap en unité de travail est de 2. Le prix du travail en unité de matériaux est de 9, cette analyse de prix de chaque input en unité des autres inputs nous informent que le meilleur input est le matériel le deuxième est le travail et enfin le dernier le capital. Notre critère de hierarchisation prend en compte les productivités moyennes, les productivité marginales et les taux marginaux de substitution techniques des 3 inputs. 
 
 ```{r,warning=FALSE, comment=NA, message=FALSE}
 tab1<-vcov(lm2)
@@ -420,6 +593,9 @@ est+1.96*seESCD
 est-1.96*seESCD
 ```
 
+Les rendements d'échelle pour la cobb Douglass sont égaux à 1.46.
+On fait un test pour savoir s'ils sont significativement différents de 1, donc afin de voir s'ils sont croissants ou non. 
+Or
 **1 n'est pas dans l'intervalle ce qui signifie que les rendements d'echelle ne sont pas constants. **
 
 
@@ -444,7 +620,7 @@ vif(lm3)
 
 Fonction pour faire le test manuellement : 
 
-```{r}
+```{r,comment=NA}
 f_test=function(contraint,non_contraint,seuil){
   rcontraint=summary(contraint)$r.squared
   rnoncontraint=summary(non_contraint)$r.squared
@@ -461,21 +637,35 @@ f_test=function(contraint,non_contraint,seuil){
 }
 ```
 
-```{r}
+
+
+```{r,comment=NA}
 f_test(lm2,lm3,0.05)
 ```
 
 
 ## Quadratique
 $$q_i = \alpha + \sum_{k=1}^{3} \beta_k x_{ik} + \frac{1}{2} \sum_{l=1}^{3}\sum_{k=1}^{3} \beta_{kl}x_{ik}x_{il}  +\epsilon_i $$
-```{r}
+```{r,comment=NA}
 prodQuad <- lm( qOut ~ qCap + qLab + qMat + I( 0.5 * qCap^2 ) + I( 0.5 * qLab^2 ) + I( 0.5 * qMat^2 )+ I( qCap * qLab ) + I( qCap * qMat ) + I( qLab * qMat ), data = data )
 stargazer(prodQuad,type='text')
 ```
 
+**Comparaison avec la fonction de production linéaire**
+Pour comparer ces 2 fonctions nous pouvons faire un test du ratio du vraisemblance.
+
+Il permet de comparer 2 modèles dont l'un est le cas particulier de l'autre. Ici le cas particulier est la linéaire et le modèle quadratique est l'extension du modèle linéaire. L'hypothèse nulle signifie que le modèle contraint est meilleur que le modèle non contraint. Si l'hypothèse nulle est rejetée alors le modèle non contraint apporte une meilleure explication de la production que le modèle non contraint
+
+
+```{r,comment=NA}
+lrtest( lm1, prodQuad )
+```
+
+La p-value est inférieure à 0.01 donc on rejette l'hypothèse nulle, le modèle quadratique apporte une information significative par rapport au modèle linéaire.  
+
 ##CES
 
-```{r}
+```{r,comment=NA}
 lmces_CapLab=lm(log(qCap/qLab) ~ log(pLab/pCap), data=data)
 lmces_CapMat=lm(log(qCap/qMat) ~ log(pMat/pCap), data=data)
 lmces_LabCap=lm(log(qLab/qCap) ~ log(pCap/pLab), data=data)
@@ -491,6 +681,8 @@ rm(i)
 ```
 
 
+Faire des tests de Student. 
+
 #Les fonctions de cout
 
 
@@ -499,7 +691,7 @@ rm(i)
 $$c_i = A	\prod_{k=1}^{3} p_{ik}^{\alpha k} q_{i}^{\alpha y} \epsilon_i$$
 
 
-```{r}
+```{r,comment=NA}
 reg_cout_CD <- lm( log( cost ) ~ log( pCap ) + log( pLab ) + log( pMat ) + log( qOut ), data = data )
 stargazer(reg_cout_CD, type='text')
 ```
@@ -530,4 +722,51 @@ stargazer(costTL,type='text')
 ```
 
 
+#Calcul des cout marginaux de production. dérivée du cout // à la production (il ne sera pas constant). 
+
+$$\frac{\partial{logC}} {\partial{logQ}}   \frac{Q}{C}$$
+
+Celle qui ont le plus grand écart cout et cout moyen. Cout moyen et cout marg doivent être decroissant si rendement échelle sont croissants. 
+
+# Classement des entreprises de plusieurs façons. (par indice de prod, un autre par taux de marge, score basé sur les deux trucs précédents). 
+
+#Objectifs finals: faire classement des entreprises. Faire des propositions. 
+
+#Cobb douglass :  rendement echelle mais elasticité substitutions (allen = 1)
+#CES généralisation de la cobb douglass
+
+#Si c'est différent de 1 la technologie n'est pas cobb douglass. Normalement tout est significativement différent de 1. 
+
+Part du cout du travail dans le cout total , de meme pour capital et matériaux. 
+Part de depense relative des facteurs indépendante du niveau de production ? Part de dépenses relatives sont constantes ? 
+Regarder distributions prx des inputs pour chaque producteurs, il y a une variabilité au niveau individuel.
+
+#Faire tous les tests de significativité global. (à voir)
+
+
+# MODELE SFA
+
+##Cobb Douglass
+
+$$Q= AK^{\alpha}L^{\beta}e^W$$
+$$Q= AK^{\alpha}L^{\beta}e^{V-U}$$
+$${\displaystyle V\sim {\mathcal {N}}(\mu ,\sigma ^{2})}.$$
+$${\displaystyle U\sim {\mathcal {N^+}}(\mu ,\sigma ^{2})}.$$
+
+$$log(Q) = constante + \alpha lnk + \beta ln L + V - U $$
+
+```{r,comment=NA}
+prodCDSFA<-sfa(log(qOut)~log(qCap) + log(qLab) + log(qMat), data= data)
+summary(prodCDSFA)
+```
+Fonction qui caractèrise une technologie de prod sauf que la fonction ici représente la technologie la plus efficace. 
+
+Dans fonction de prod et sfa c'est le max que l'on peut produire avec ce que l'on peut produire. 
+
+Entre 0 et 1, écart entre production effective et ce qui est produit. (un ratio).
+
+Fonction frontière de cout ou la le but est pas de classe les ent des ent qui produise le plus mais de classer celles qui ont le cout le plus faible.
+
+Pour une fonction sfa de cout une entreprise inefficace va etre au dessus de la fonction frontière de cout
+ineffDecrease = pour inverser fonction frontiere
 
